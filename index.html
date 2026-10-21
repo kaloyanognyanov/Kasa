@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Каса">
+<meta name="theme-color" content="#12332F">
+<title>Каса</title>
+<style>
+:root{--bg:#E9EFEE;--card:#fff;--ink:#12332F;--mute:#5B726E;--line:#CBD8D6;--ok:#1E7B4F;--bad:#B3261E;--acc:#12332F;--accfg:#fff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0D1B19;--card:#162926;--ink:#E3EFED;--mute:#8FA8A4;--line:#2A423E;--ok:#58C48C;--bad:#FF8A80;--acc:#58C48C;--accfg:#0D1B19}}
+:root[data-theme="dark"]{--bg:#0D1B19;--card:#162926;--ink:#E3EFED;--mute:#8FA8A4;--line:#2A423E;--ok:#58C48C;--bad:#FF8A80;--acc:#58C48C;--accfg:#0D1B19}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 -apple-system,"Segoe UI",Roboto,sans-serif;max-width:520px;margin-inline:auto;padding:12px 12px 110px}
+.tabs{display:flex;gap:4px;margin-bottom:12px}
+.tabs button{flex:1;padding:10px 2px;font-size:13px;font-weight:600;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:10px}
+.tabs button.on{background:var(--acc);color:var(--accfg);border-color:var(--acc)}
+section{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+h2{font-size:16px;margin:0 0 6px}
+.row{display:flex;align-items:center;gap:10px;padding:4px 0}
+.row label{flex:1;font-size:15px}
+input{font:inherit;color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:116px;text-align:right}
+input:focus{outline:2px solid var(--acc);outline-offset:1px}
+.calc{display:flex;justify-content:space-between;padding:3px 0;font-size:15px}
+.calc b{font-variant-numeric:tabular-nums}
+.mute{color:var(--mute)}
+.rule{border:0;border-top:1px dashed var(--line);margin:8px 0}
+.ok{color:var(--ok)}.bad{color:var(--bad)}
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));display:flex;justify-content:space-between;align-items:center;max-width:520px;margin-inline:auto}
+.bar small{display:block;color:var(--mute);font-size:12px}
+.bar b{font-size:22px;font-variant-numeric:tabular-nums}
+.btns{display:flex;gap:10px}
+.btns button{flex:1;font:inherit;font-weight:600;padding:12px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--ink)}
+.btns button.p{background:var(--acc);color:var(--accfg);border-color:var(--acc)}
+.hist div{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line);font-size:14px}
+.hist div:last-child{border:0}
+</style>
+</head>
+<body>
+<nav class="tabs" id="tabs"></nav>
+<main id="main"></main>
+<div class="bar"><div><small>Очаквано в касата</small><b id="bExp">0.00</b></div><div style="text-align:right"><small id="bLbl">Разлика</small><b id="bDiff">–</b></div></div>
+
+<script>
+const $=s=>document.querySelector(s);
+const G=[
+ {id:'staff',tab:'Персонал',items:['Сервитьор 1','Сервитьор 2','Сервитьор 3','Барман'],f:[['t','Оборот'],['w','Надница']]},
+ {id:'cour',tab:'Куриери',items:['Здравко','Валио','Марто','Фирма'],f:[['o','Оборот (още не е върнат)']]},
+ {id:'plat',tab:'Платформи',items:['Glovo','Wolt','Bolt','Сайт'],f:[['o','Чакам от платформата']]},
+ {id:'misc',tab:'Други',items:['Стока','Миячка','Друг помощен персонал'],f:[['w','Платено от касата']]}
+];
+function ld(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}}
+function sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}}
+let st=ld('kasa2-state')||{};
+const iso=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const fd=s=>{const p=String(s).split('-');return p.length===3?p[2]+'.'+p[1]+'.'+p[0]:s};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let clrArm=0;
+function msg(t,bad){const m=$('#msg');m.textContent=t;m.className=bad?'bad':'ok'}
+if(st.pct===undefined)st.pct='3';
+if(!st.date)st.date=iso();
+const n=k=>parseFloat(String(st[k]||'').replace(',','.'))||0;
+const f=x=>x.toFixed(2);
+const inp=k=>`<input data-k="${k}" inputmode="decimal" placeholder="0.00" value="${st[k]??''}">`;
+const row=(k,l)=>`<div class="row"><label>${l}</label>${inp(k)}</div>`;
+const calc=(l,id)=>`<div class="calc"><span>${l}</span><b id="${id}">0.00</b></div>`;
+let h='';
+G.forEach(g=>{
+ h+=`<div class="panel" id="p-${g.id}" hidden>`+g.items.map((nm,i)=>`<section><h2>${nm}</h2>`+g.f.map(([c,l])=>row(g.id+i+c,l)).join('')+(g.id==='staff'?`<div class="calc mute"><span>Бонус <span class="pc"></span>%</span><b id="b${i}">0.00</b></div>`:'')+`</section>`).join('')+`</div>`;
+});
+h+=`<div class="panel" id="p-sum" hidden>
+<section><h2>Аванс</h2>${row('adv','Аванс (платен от касата)')}</section>
+<section><h2>Приходи</h2>${calc('Общ оборот','sTot')}${row('card','Карти (по POS)')}</section>
+<section><h2>Още не са в касата</h2>${calc('Куриери и платформи','sOwed')}</section>
+<section><h2>Платено от касата днес</h2>${row('pct','Бонус от оборота (%)')}${calc('Бонус общо','sBonus')}${calc('Надници общо','sWage')}${row('sup','Доставчици платени днес')}${row('exp','Други разходи')}<div class="mute" style="font-size:13px">Доставчици, които се плащат утре, не се въвеждат.</div></section>
+<section>${calc('Очаквани пари в касата','sExp')}<hr class="rule">${row('cnt','<b>Преброени пари</b>')}${calc('Разлика','sDiff')}</section>
+<section><h2>Отчет</h2><div class="row"><label>Дата</label><input type="date" data-k="date" value="${st.date??''}" style="width:150px;text-align:left"></div><div class="row"><label>Направен от</label><input data-k="who" value="${esc(st.who??'')}" placeholder="Име" style="width:150px;text-align:left"></div><div class="btns" style="margin-top:8px"><button class="p" id="save">Запази деня</button><button id="clr">Нов ден</button></div><div id="msg" class="mute" style="margin-top:8px;font-size:14px"></div></section>
+<section class="hist"><h2>Последни дни</h2><div id="hist" class="mute">Още няма запазени дни.</div></section>
+</div>`;
+$('#main').innerHTML=h;
+const T=[...G.map(g=>[g.id,g.tab]),['sum','Каса']];
+$('#tabs').innerHTML=T.map(([id,l])=>`<button data-t="${id}">${l}</button>`).join('');
+function show(id){T.forEach(([t])=>{$('#p-'+t).hidden=t!==id});document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===id));window.scrollTo(0,0)}
+$('#tabs').onclick=e=>{if(e.target.dataset.t)show(e.target.dataset.t)};
+function run(){
+ let tot=0,wage=0,owed=0;
+ G.forEach(g=>g.items.forEach((_,i)=>g.f.forEach(([c])=>{const v=n(g.id+i+c);if(c==='t')tot+=v;if(c==='w')wage+=v;if(c==='o')owed+=v})));
+ const p=n('pct'),bonus=tot*p/100;
+ const exp=tot-n('card')-owed-bonus-wage-n('adv')-n('sup')-n('exp');
+ document.querySelectorAll('.pc').forEach(e=>e.textContent=p);
+ G[0].items.forEach((_,i)=>$('#b'+i).textContent=f(n('staff'+i+'t')*p/100));
+ $('#sTot').textContent=f(tot);$('#sOwed').textContent=f(owed);$('#sBonus').textContent=f(bonus);$('#sWage').textContent=f(wage);
+ $('#sExp').textContent=f(exp);$('#bExp').textContent=f(exp);
+ const has=String(st.cnt||'').trim()!=='';
+ const d=n('cnt')-exp;
+ const t=has?(Math.abs(d)<0.005?'0.00':(d>0?'+':'')+f(d)):'–';
+ const cl=has?(d<-0.005?'bad':'ok'):'';
+ ['#sDiff','#bDiff'].forEach(s=>{$(s).textContent=t;$(s).className=cl});
+ $('#bLbl').textContent=!has?'Разлика':d<-0.005?'Липсват':d>0.005?'Повече':'Точно';
+ return has?d:null;
+}
+document.addEventListener('input',e=>{const k=e.target.dataset.k;if(k){st[k]=e.target.value;sv('kasa2-state',st);run()}});
+$('#save').onclick=()=>{
+ const d=run();if(d===null){msg('Първо въведи преброените пари.',1);return}
+ const hs=ld('kasa-hist')||[];
+ const e={date:st.date||iso(),who:(st.who||'').trim(),tot:parseFloat($('#sTot').textContent),exp:parseFloat($('#sExp').textContent),cnt:n('cnt'),diff:d};const j=hs.findIndex(x=>x.date===e.date);if(j>=0)hs[j]=e;else hs.push(e);hs.sort((a,b)=>a.date<b.date?-1:1);
+ const ok=sv('kasa-hist',hs.slice(-60));hist();msg(ok?'Записано: '+fd(e.date)+(e.who?' · '+e.who:''):'Не успях да запиша на това устройство.',!ok);
+};
+$('#clr').onclick=()=>{
+ if(!clrArm){clrArm=1;$('#clr').textContent='Натисни пак';setTimeout(()=>{clrArm=0;$('#clr').textContent='Нов ден'},3000);return}clrArm=0;$('#clr').textContent='Нов ден';
+ const keep={pct:st.pct,who:st.who,date:iso()};st=keep;sv('kasa2-state',st);
+ document.querySelectorAll('input[data-k]').forEach(i=>i.value=st[i.dataset.k]??'');run();show('staff');
+};
+function hist(){
+ const hs=ld('kasa-hist')||[];if(!hs.length)return;
+ $('#hist').className='';
+ $('#hist').innerHTML=hs.slice().reverse().slice(0,14).map(x=>`<div><span>${fd(x.date)}<br><small class="mute">${esc(x.who||'–')}</small></span><span class="mute">оборот ${f(x.tot)}</span><b class="${x.diff<-0.005?'bad':'ok'}">${x.diff>0?'+':''}${f(x.diff)}</b></div>`).join('');
+}
+run();hist();show('staff');
+</script>
+</body>
+</html>
