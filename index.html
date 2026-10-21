@@ -109,9 +109,9 @@ function msg(t,bad,id){const m=$(id||'#msg');m.textContent=t;m.className=bad?'ba
 function run(){
  const p=n('pct'),c=cc(n,t=>t*p/100);
  G.staff.forEach((s,i)=>{if(!s[1])return;
-  const t=n('staff'+i+'t'),bn=t*p/100,r=t-n('staff'+i+'c')-n('staff'+i+'w')-bn-(s[2]?c.plat:0);
+  const t=n('staff'+i+'t'),bn=t*p/100,r=t-n('staff'+i+'c')-n('staff'+i+'w')-bn-(s[2]?c.plat+c.cour:0);
   $('#b'+i).textContent=f(bn);const e=$('#r'+i);e.textContent=f(r);e.className=r<-0.005?'bad':'';
-  if(s[2])$('#bp').textContent='Платформите ('+f(c.plat)+') са в оборота и се вадят от остатъка'});
+  if(s[2])$('#bp').textContent='Платформи ('+f(c.plat)+') и шофьори ('+f(c.cour)+') се вадят от остатъка'});
  LK.forEach(k=>{$('#t_'+k).textContent=f(n(k));$('#e_'+k).textContent=String(st[k]||'').split('+').join(' + ')});
  [['sPlat',c.plat],['sCour',c.cour],['sTot',c.tot],['sCard',c.card],['sOwed',c.owed],['sBonus',c.bonus],['sWage',c.wage],['sExp',c.ex]].forEach(([i,v])=>$('#'+i).textContent=f(v));
  $('#bExp').textContent=f(c.ex);
@@ -171,7 +171,7 @@ function renderWeek(){
  o+=`<section><h2>Персонал</h2>`+G.staff.map((s,i)=>{
   const w=a.s['staff'+i+'w'];
   if(!s[1])return`<div class="pb"><h3>${s[0]}</h3><div class="der"><span>Надница <b>${f(w)}</b></span></div></div>`;
-  const t=a.s['staff'+i+'t'],cd=a.s['staff'+i+'c'],r=t-cd-w-a.b[i]-(s[2]?a.c.plat:0);
+  const t=a.s['staff'+i+'t'],cd=a.s['staff'+i+'c'],r=t-cd-w-a.b[i]-(s[2]?a.c.plat+a.c.cour:0);
   return`<div class="pb"><h3>${s[0]}</h3><div class="g3 ro"><span>Оборот<b>${f(t)}</b></span><span>Карти<b>${f(cd)}</b></span><span>Надница<b>${f(w)}</b></span></div><div class="der"><span>Бонус <b>${f(a.b[i])}</b></span><span>Остатък <b class="${r<-0.005?'bad':''}">${f(r)}</b></span></div></div>`}).join('')+`</section>`;
  o+=`<section><h2>Платформи</h2>`+G.plat.map((nm,i)=>L(nm,a.s['plat'+i+'o'],p.s['plat'+i+'o'])).join('')+`<hr class="rule">${L('Общо платформи',a.c.plat,p.c.plat)}</section>`;
  o+=`<section><h2>Шофьори</h2>`+G.cour.map((nm,i)=>L(nm,a.s['cour'+i+'o'],p.s['cour'+i+'o'])).join('')+`<hr class="rule">${L('Общо шофьори',a.c.cour,p.c.cour)}</section>`;
