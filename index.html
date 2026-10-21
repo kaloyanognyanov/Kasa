@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Каса">
+<meta name="theme-color" content="#12332F">
+<title>Каса</title>
+<style>
+:root{--bg:#E9EFEE;--card:#fff;--ink:#12332F;--mute:#5B726E;--line:#CBD8D6;--ok:#1E7B4F;--bad:#B3261E;--acc:#12332F;--accfg:#fff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0D1B19;--card:#162926;--ink:#E3EFED;--mute:#8FA8A4;--line:#2A423E;--ok:#58C48C;--bad:#FF8A80;--acc:#58C48C;--accfg:#0D1B19}}
+:root[data-theme="dark"]{--bg:#0D1B19;--card:#162926;--ink:#E3EFED;--mute:#8FA8A4;--line:#2A423E;--ok:#58C48C;--bad:#FF8A80;--acc:#58C48C;--accfg:#0D1B19}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 -apple-system,"Segoe UI",Roboto,sans-serif;max-width:520px;margin-inline:auto;padding:12px 12px 110px}
+.tabs{display:flex;gap:4px;margin-bottom:12px}
+.tabs button{flex:1;padding:10px 2px;font:inherit;font-size:13px;font-weight:600;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:10px}
+.tabs button.on{background:var(--acc);color:var(--accfg);border-color:var(--acc)}
+section{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+h2{font-size:17px;margin:0 0 6px}
+h3{font-size:15px;margin:0 0 6px}
+.row{display:flex;align-items:center;gap:10px;padding:4px 0}
+.row label{flex:1;font-size:15px}
+input{font:inherit;color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:116px;text-align:right}
+input:focus{outline:2px solid var(--acc);outline-offset:1px}
+.pb{border-top:1px solid var(--line);padding:9px 0}.pb:first-of-type{border:0;padding-top:2px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.g3 label,.ro span{display:flex;flex-direction:column;gap:2px;font-size:12px;color:var(--mute)}
+.g3 input{width:100%;padding:8px 6px}
+.ro b{font-size:15px;color:var(--ink);font-variant-numeric:tabular-nums}
+.der{display:flex;justify-content:space-between;font-size:14px;margin-top:6px}
+.der b{font-variant-numeric:tabular-nums}
+.lr{display:grid;grid-template-columns:1fr auto 72px 38px 38px;gap:6px;align-items:center;padding:3px 0}
+.lr input{width:100%;padding:7px 6px}
+.lr button{padding:6px 0;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:8px;font:inherit;font-weight:700}
+.ent{font-size:12px;color:var(--mute);word-break:break-all}
+.calc{display:flex;justify-content:space-between;padding:3px 0;font-size:15px}
+.calc b{font-variant-numeric:tabular-nums}
+.mute{color:var(--mute)}
+.hint{font-size:13px;color:var(--mute);margin:2px 0 6px}
+.rule{border:0;border-top:1px dashed var(--line);margin:8px 0}
+.ok{color:var(--ok)}.bad{color:var(--bad)}
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));display:flex;justify-content:space-between;align-items:center;max-width:520px;margin-inline:auto}
+.bar small{display:block;color:var(--mute);font-size:12px}
+.bar b{font-size:22px;font-variant-numeric:tabular-nums}
+.btns{display:flex;gap:10px}
+.btns button,.wn button{font:inherit;font-weight:600;padding:12px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--ink)}
+.btns button{flex:1}
+.btns button.p{background:var(--acc);color:var(--accfg);border-color:var(--acc)}
+.wn{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.wn button{width:48px;padding:6px;font-size:20px}
+.hist div{display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid var(--line);font-size:14px}
+.hist div:last-child{border:0}
+</style>
+</head>
+<body>
+<nav class="tabs" id="tabs"></nav>
+<main><div id="p-day"></div><div id="p-sum" hidden></div><div id="p-week" hidden></div><div id="p-hist" hidden></div></main>
+<div class="bar" id="bar"><div><small>Очаквано в касата</small><b id="bExp">0.00</b></div><div style="text-align:right"><small id="bLbl">Разлика</small><b id="bDiff">–</b></div></div>
+
+<script>
+const $=s=>document.querySelector(s);
+const G={staff:[['Сервитьор 1',1],['Сервитьор 2',1],['Сервитьор 3',1],['Барман',1,1],['Миячка',0],['Друг помощен персонал',0]],cour:['Здравко','Вальо','Марто'],plat:['Glovo','Wolt','Bolt','Сайт']};
+const ld=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
+const sv=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}};
+const f=x=>x.toFixed(2);
+const sg=x=>(x>0.005?'+':'')+f(Math.abs(x)<0.005?0:x);
+const cls=x=>x<-0.005?'bad':'ok';
+const iso=d=>{d=d||new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const pd=s=>{const p=s.split('-');return new Date(+p[0],+p[1]-1,+p[2])};
+const addD=(s,k)=>{const d=pd(s);d.setDate(d.getDate()+k);return iso(d)};
+const mon=s=>addD(s,-((pd(s).getDay()+6)%7));
+const fd=s=>{const p=String(s).split('-');return p.length===3?p[2]+'.'+p[1]+'.'+p[0]:s};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let st=ld('kasa2-state')||{};
+if(st.pct===undefined)st.pct='3';
+if(!st.date)st.date=iso();
+const val=s=>String(s||'').split('+').reduce((a,p)=>a+(parseFloat(p.replace(',','.'))||0),0);
+const n=k=>val(st[k]);
+const SK=[],LK=[];
+G.staff.forEach((s,i)=>{if(s[1]){SK.push('staff'+i+'t');SK.push('staff'+i+'c')}SK.push('staff'+i+'w')});
+G.cour.forEach((_,i)=>{SK.push('cour'+i+'o');LK.push('cour'+i+'o')});
+G.plat.forEach((_,i)=>{SK.push('plat'+i+'o');LK.push('plat'+i+'o')});
+['adv','stock','sup','exp','cnt'].forEach(k=>SK.push(k));
+const cc=(g,b)=>{let tot=0,card=0,wage=0,plat=0,cour=0;
+ G.plat.forEach((_,i)=>plat+=g('plat'+i+'o'));G.cour.forEach((_,i)=>cour+=g('cour'+i+'o'));
+ G.staff.forEach((s,i)=>{if(s[1]){tot+=g('staff'+i+'t')+(s[2]?plat:0);card+=g('staff'+i+'c')}wage+=g('staff'+i+'w')});
+ const bonus=typeof b==='function'?b(tot):b;
+ return{tot,card,wage,plat,cour,owed:plat+cour,bonus,ex:tot-card-bonus-wage-plat-cour-g('adv')-g('stock')-g('exp')+g('sup')}};
+
+const inp=k=>`<input data-k="${k}" inputmode="decimal" placeholder="0.00" value="${esc(st[k]??'')}">`;
+const row=(k,l)=>`<div class="row"><label>${l}</label>${inp(k)}</div>`;
+const cr=(l,id)=>`<div class="calc"><span>${l}</span><b id="${id}">0.00</b></div>`;
+const hint=t=>`<div class="hint">${t}</div>`;
+const lrow=(k,nm)=>`<div class="lr"><span>${nm}</span><b id="t_${k}">0.00</b><input id="a_${k}" inputmode="decimal" placeholder="сума"><button data-add="${k}">+</button><button data-undo="${k}">↶</button></div><div class="ent" id="e_${k}"></div>`;
+$('#p-day').innerHTML=
+`<section><h2>Персонал</h2>`+G.staff.map((s,i)=>s[1]?
+`<div class="pb"><h3>${s[0]}</h3><div class="g3"><label>Оборот${inp('staff'+i+'t')}</label><label>Карти${inp('staff'+i+'c')}</label><label>Надница${inp('staff'+i+'w')}</label></div>${s[2]?'<div class="hint" id="bp"></div>':''}<div class="der"><span>Бонус <b id="b${i}">0.00</b></span><span>Остатък <b id="r${i}">0.00</b></span></div></div>`:
+`<div class="pb"><h3>${s[0]}</h3><div class="g3"><label>Надница${inp('staff'+i+'w')}</label></div></div>`).join('')+`</section>`+
+`<section><h2>Платформи</h2>${hint('Поръчки през деня. Влизат в оборота на бармана.')}`+G.plat.map((nm,i)=>lrow('plat'+i+'o',nm)).join('')+`<hr class="rule">${cr('Общо платформи','sPlat')}</section>`+
+`<section><h2>Шофьори</h2>${hint('Оборот, който още не е върнат.')}`+G.cour.map((nm,i)=>lrow('cour'+i+'o',nm)).join('')+`<hr class="rule">${cr('Общо шофьори','sCour')}</section>`+
+`<section><h2>Каса</h2>${row('adv','Аванс (платен от касата)')}<hr class="rule">${cr('Общ оборот','sTot')}${cr('Карти общо','sCard')}${cr('Още не са в касата','sOwed')}${row('pct','Бонус от оборота (%)')}${cr('Бонус общо','sBonus')}${cr('Надници общо','sWage')}${row('stock','Разход стока')}${row('sup','Доставчици (добавя се към касата)')}${row('exp','Други разходи')}${hint('Сумата от доставчици се добавя към очакваните пари в касата.')}<hr class="rule">${cr('Очаквани пари в касата','sExp')}${row('cnt','<b>Преброени пари</b>')}${cr('Разлика','sDiff')}</section>`+
+`<section><h2>Отчет</h2><div class="row"><label>Дата</label><input type="date" data-k="date" value="${st.date}" style="width:150px;text-align:left"></div><div class="row"><label>Направен от</label><input data-k="who" value="${esc(st.who??'')}" placeholder="Име" style="width:150px;text-align:left"></div><div class="btns" style="margin-top:8px"><button class="p" id="save">Запази деня</button><button id="clr">Нов ден</button></div><div id="msg" class="mute" style="margin-top:8px;font-size:14px"></div></section>`;
+
+let clrArm=0;
+function msg(t,bad,id){const m=$(id||'#msg');m.textContent=t;m.className=bad?'bad':'ok'}
+function run(){
+ const p=n('pct'),c=cc(n,t=>t*p/100);
+ G.staff.forEach((s,i)=>{if(!s[1])return;
+  const t=n('staff'+i+'t')+(s[2]?c.plat:0),bn=t*p/100,r=t-n('staff'+i+'c')-n('staff'+i+'w')-bn;
+  $('#b'+i).textContent=f(bn);const e=$('#r'+i);e.textContent=f(r);e.className=r<-0.005?'bad':'';
+  if(s[2])$('#bp').textContent='+ платформи '+f(c.plat)+' = оборот '+f(t)});
+ LK.forEach(k=>{$('#t_'+k).textContent=f(n(k));$('#e_'+k).textContent=String(st[k]||'').split('+').join(' + ')});
+ [['sPlat',c.plat],['sCour',c.cour],['sTot',c.tot],['sCard',c.card],['sOwed',c.owed],['sBonus',c.bonus],['sWage',c.wage],['sExp',c.ex]].forEach(([i,v])=>$('#'+i).textContent=f(v));
+ $('#bExp').textContent=f(c.ex);
+ const has=String(st.cnt||'').trim()!=='',d=n('cnt')-c.ex;
+ const t=has?sg(d):'–',k=has?cls(d):'';
+ ['#sDiff','#bDiff'].forEach(s=>{$(s).textContent=t;$(s).className=k});
+ $('#bLbl').textContent=!has?'Разлика':d<-0.005?'Липсват':d>0.005?'Повече':'Точно';
+ return{d:has?d:null,c};
+}
+document.addEventListener('input',e=>{const k=e.target.dataset.k;if(k){st[k]=e.target.value;sv('kasa2-state',st);run()}});
+document.addEventListener('click',e=>{const a=e.target.dataset.add,u=e.target.dataset.undo;
+ if(a){const x=parseFloat($('#a_'+a).value.replace(',','.'));if(x>0){st[a]=(st[a]?st[a]+'+':'')+x;sv('kasa2-state',st);$('#a_'+a).value='';run()}}
+ if(u&&st[u]){const q=String(st[u]).split('+');q.pop();st[u]=q.join('+');sv('kasa2-state',st);run()}});
+$('#save').onclick=()=>{
+ const r=run();if(r.d===null){msg('Първо въведи преброените пари.',1);return}
+ const hs=ld('kasa-hist')||[],v={};SK.forEach(k=>v[k]=n(k));
+ const e={date:st.date||iso(),who:(st.who||'').trim(),pct:n('pct'),v,tot:r.c.tot,bonus:r.c.bonus,ex:r.c.ex,cnt:n('cnt'),diff:r.d};
+ const j=hs.findIndex(x=>x.date===e.date);if(j>=0)hs[j]=e;else hs.push(e);
+ hs.sort((a,b)=>a.date<b.date?-1:1);
+ const ok=sv('kasa-hist',hs.slice(-200));
+ push('day',e).then(s=>msg(ok?'Записано: '+fd(e.date)+(e.who?' · '+e.who:'')+(s?' · синхронизирано':' · само на това устройство'):'Не успях да запиша на това устройство.',!ok));
+};
+$('#clr').onclick=()=>{
+ if(!clrArm){clrArm=1;$('#clr').textContent='Натисни пак';setTimeout(()=>{clrArm=0;$('#clr').textContent='Нов ден'},3000);return}
+ clrArm=0;$('#clr').textContent='Нов ден';
+ st={pct:st.pct,who:st.who,date:iso()};sv('kasa2-state',st);
+ document.querySelectorAll('input[data-k]').forEach(i=>i.value=st[i.dataset.k]??'');run();msg('');window.scrollTo(0,0);
+};
+
+/* Обобщение */
+function renderSum(){
+ const c=cc(n,t=>t*n('pct')/100);
+ const L=(l,v)=>`<div class="calc"><span>${l}</span><b>${f(v)}</b></div>`;
+ $('#p-sum').innerHTML=`<section><h2>Обобщение · ${fd(st.date)}</h2>${L('Аванс',n('adv'))}${L('Оборот',c.tot)}${L('Разход стока',n('stock'))}${L('Надници',c.wage)}${L('Процент ('+n('pct')+'%)',c.bonus)}</section>`+
+ `<section><h2>Дължимо от платформи</h2>${L('Общо',c.plat)}<hr class="rule">`+G.plat.map((x,i)=>L(x,n('plat'+i+'o'))).join('')+`</section>`+
+ `<section><h2>Дължимо от шофьори</h2>${L('Общо',c.cour)}<hr class="rule">`+G.cour.map((x,i)=>L(x,n('cour'+i+'o'))).join('')+`</section>`;
+}
+
+/* Седмица */
+let wk=mon(iso());
+function agg(ws){
+ const we=addD(ws,6),hs=(ld('kasa-hist')||[]).filter(x=>x.date>=ws&&x.date<=we);
+ const s={},b=[];let bonus=0;
+ SK.forEach(k=>s[k]=0);G.staff.forEach((_,i)=>b[i]=0);
+ hs.forEach(r=>{const v=r.v||{};SK.forEach(k=>s[k]+=v[k]||0);
+  let ps=0;G.plat.forEach((_,j)=>ps+=v['plat'+j+'o']||0);
+  G.staff.forEach((x,i)=>{if(x[1])b[i]+=((v['staff'+i+'t']||0)+(x[2]?ps:0))*(r.pct??3)/100});bonus+=r.bonus||0});
+ const c=cc(k=>s[k],bonus);
+ return{days:hs.length,s,b,c,cnt:s.cnt,diff:s.cnt-c.ex};
+}
+const pc=(a,b,has)=>{if(!has||!b)return'';const x=(a-b)/Math.abs(b)*100;return(x>=0?'▲ ':'▼ ')+Math.abs(x).toFixed(1)+'%'};
+function renderWeek(){
+ const we=addD(wk,6),a=agg(wk),p=agg(addD(wk,-7)),h=p.days>0;
+ const L=(l,x,y)=>`<div class="calc"><span>${l}</span><span><b>${f(x)}</b> <small class="mute">${pc(x,y,h)}</small></span></div>`;
+ let o=`<section><div class="wn"><button id="wp">‹</button><b>${fd(wk)} – ${fd(we)}</b><button id="wnx">›</button></div><div class="mute" style="text-align:center;font-size:14px">Дни с отчет: ${a.days} от 7</div></section>`;
+ if(!a.days){$('#p-week').innerHTML=o+'<section class="mute">Няма запазени дни за тази седмица. Запази дневните отчети от таб „Ден“.</section>';return}
+ o+=`<section><h2>Персонал</h2>`+G.staff.map((s,i)=>{
+  const w=a.s['staff'+i+'w'];
+  if(!s[1])return`<div class="pb"><h3>${s[0]}</h3><div class="der"><span>Надница <b>${f(w)}</b></span></div></div>`;
+  const t=a.s['staff'+i+'t']+(s[2]?a.c.plat:0),cd=a.s['staff'+i+'c'],r=t-cd-w-a.b[i];
+  return`<div class="pb"><h3>${s[0]}</h3><div class="g3 ro"><span>Оборот<b>${f(t)}</b></span><span>Карти<b>${f(cd)}</b></span><span>Надница<b>${f(w)}</b></span></div><div class="der"><span>Бонус <b>${f(a.b[i])}</b></span><span>Остатък <b class="${r<-0.005?'bad':''}">${f(r)}</b></span></div></div>`}).join('')+`</section>`;
+ o+=`<section><h2>Платформи</h2>`+G.plat.map((nm,i)=>L(nm,a.s['plat'+i+'o'],p.s['plat'+i+'o'])).join('')+`<hr class="rule">${L('Общо платформи',a.c.plat,p.c.plat)}</section>`;
+ o+=`<section><h2>Шофьори</h2>`+G.cour.map((nm,i)=>L(nm,a.s['cour'+i+'o'],p.s['cour'+i+'o'])).join('')+`<hr class="rule">${L('Общо шофьори',a.c.cour,p.c.cour)}</section>`;
+ o+=`<section><h2>Каса</h2>${L('Аванс',a.s.adv,p.s.adv)}<hr class="rule">${L('Общ оборот',a.c.tot,p.c.tot)}${L('Карти общо',a.c.card,p.c.card)}${L('Още не са в касата',a.c.owed,p.c.owed)}${L('Бонус общо',a.c.bonus,p.c.bonus)}${L('Надници общо',a.c.wage,p.c.wage)}${L('Разход стока',a.s.stock,p.s.stock)}${L('Доставчици (добавя се)',a.s.sup,p.s.sup)}${L('Други разходи',a.s.exp,p.s.exp)}<hr class="rule">${L('Очаквани пари в касата',a.c.ex,p.c.ex)}${L('Преброени пари',a.cnt,p.cnt)}<div class="calc"><span>Разлика</span><span><b class="${cls(a.diff)}">${sg(a.diff)}</b> <small class="mute">${pc(a.diff,p.diff,h)}</small></span></div>${hint(h?'▲ ▼ показват промяната в проценти спрямо предишната седмица.':'Няма данни за предишната седмица, затова няма проценти.')}</section>`;
+ o+=`<section><div class="btns"><button class="p" id="wsave">Запази седмицата</button></div><div id="wmsg" class="mute" style="margin-top:8px;font-size:14px"></div></section>`;
+ $('#p-week').innerHTML=o;
+}
+function saveWeek(){
+ const a=agg(wk),p=agg(addD(wk,-7));if(!a.days)return;
+ const ws=ld('kasa-weeks')||[];
+ const e={ws:wk,who:(st.who||'').trim(),days:a.days,tot:a.c.tot,cnt:a.cnt,ex:a.c.ex,diff:a.diff,chg:p.days&&p.c.tot?(a.c.tot-p.c.tot)/p.c.tot*100:null};
+ const j=ws.findIndex(x=>x.ws===e.ws);if(j>=0)ws[j]=e;else ws.push(e);
+ ws.sort((x,y)=>x.ws<y.ws?-1:1);
+ const ok=sv('kasa-weeks',ws.slice(-100));
+ push('week',e).then(s=>msg(ok?'Записана седмица '+fd(e.ws)+(e.who?' · '+e.who:'')+(s?' · синхронизирано':' · само на това устройство'):'Не успях да запиша на това устройство.',!ok,'#wmsg'));
+}
+$('#p-week').onclick=e=>{const id=e.target.id;
+ if(id==='wp'){wk=addD(wk,-7);renderWeek()}else if(id==='wnx'){wk=addD(wk,7);renderWeek()}else if(id==='wsave')saveWeek()};
+
+/* Синхронизация между устройства */
+
+
+
+let sync='';
+const rk=(t,r)=>t==='day'?r.date:r.ws;
+async function api(m,b){const r=await fetch('/api/history',{method:m,headers:{'content-type':'application/json'},body:b?JSON.stringify(b):undefined});if(!r.ok)throw new Error(r.status);return r.json()}
+async function push(t,rec){try{await api('POST',{t,rec});return true}catch(e){return false}}
+async function pull(){
+ try{
+  const S=await api('GET');
+  for(const [t,key,arr] of [['day','kasa-hist',S.hist||[]],['week','kasa-weeks',S.weeks||[]]]){
+   const have=new Set(arr.map(r=>rk(t,r)));
+   for(const r of (ld(key)||[]))if(!have.has(rk(t,r))){await push(t,r);arr.push(r)}
+   arr.sort((a,b)=>rk(t,a)<rk(t,b)?-1:1);sv(key,arr);
+  }
+  sync='ok';
+ }catch(e){sync='off'}
+}
+const stxt=()=>sync==='ok'?'Историята е обща за всички устройства.':sync==='pin'?'Грешен или липсващ ПИН. Историята е само на това устройство.':sync==='off'?'Няма връзка със сървъра. Историята е само на това устройство.':'';
+
+/* История и одит */
+let hv='d',adminPin='';
+const hdr=()=>`<div class="tabs">${[['d','Дни'],['w','Седмици']].map(([k,l])=>`<button data-h="${k}" class="${hv===k?'on':''}">${l}</button>`).join('')}</div>`;
+function renderHist(){
+ if(hv==='a'){$('#p-hist').innerHTML=hdr()+`<section><div class="row"><label>ПИН на админ</label><input id="apin" type="password" value="${esc(adminPin)}" style="width:150px;text-align:left"></div><div class="btns"><button class="p" id="ashow">Покажи одита</button></div><div id="alog" class="hist" style="margin-top:8px"></div></section>`;return}
+ const hs=(ld('kasa-hist')||[]).slice().reverse(),ws=(ld('kasa-weeks')||[]).slice().reverse();
+ let o;
+ if(hv==='d')o=hs.length?hs.map(x=>`<div><span>${fd(x.date)}<br><small class="mute">${esc(x.who||'–')}</small></span><span class="mute">оборот ${f(x.tot)}<br>в касата ${x.cnt===undefined?'–':f(x.cnt)}</span><b class="${cls(x.diff)}">${sg(x.diff)}</b></div>`).join(''):'<span class="mute">Още няма запазени дни.</span>';
+ else o=ws.length?ws.map(x=>`<div><span>${fd(x.ws).slice(0,5)} – ${fd(addD(x.ws,6))}<br><small class="mute">${esc(x.who||'–')} · ${x.days} дни</small></span><span class="mute">оборот ${f(x.tot)}${x.chg==null?'':' ('+(x.chg>=0?'▲':'▼')+' '+Math.abs(x.chg).toFixed(1)+'%)'}<br>в касата ${f(x.cnt)}</span><b class="${cls(x.diff)}">${sg(x.diff)}</b></div>`).join(''):'<span class="mute">Още няма запазени седмици.</span>';
+ $('#p-hist').innerHTML=hdr()+'<section class="hist">'+o+'</section><div class="hint">'+stxt()+'</div>';
+}
+async function showAudit(){
+ adminPin=$('#apin').value;const el=$('#alog');el.textContent='…';
+ try{
+  const r=await fetch('/api/history?audit=1',{headers:{'x-pin':adminPin}});
+  if(!r.ok)throw new Error(r.status);
+  const j=await r.json();
+  el.innerHTML=j.length?j.map(x=>`<div><span>${new Date(x.ts).toLocaleString('bg-BG',{dateStyle:'short',timeStyle:'short'})}<br><small class="mute">${esc(x.who||'–')}</small></span><span class="mute">${x.t==='day'?'ден':'седмица'} ${fd(x.key)}<br>оборот ${f(x.tot||0)}${x.old?' (преди '+f(x.old.tot||0)+')':''}</span><b class="${cls(x.diff||0)}">${sg(x.diff||0)}</b></div>`).join(''):'<span class="mute">Няма записи.</span>';
+ }catch(e){el.textContent=['401','403'].includes(String(e.message))?'Грешен ПИН на админ.':'Няма връзка със сървъра.'}
+}
+$('#p-hist').onclick=e=>{if(e.target.dataset.h){hv=e.target.dataset.h;renderHist()}else if(e.target.id==='ashow')showAudit()};
+
+const T=[['day','Ден'],['sum','Обобщение'],['week','Седмица'],['hist','История']];
+$('#tabs').innerHTML=T.map(([id,l])=>`<button data-t="${id}">${l}</button>`).join('');
+function show(id){
+ T.forEach(([t])=>{$('#p-'+t).hidden=t!==id});
+ document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===id));
+ $('#bar').style.display=id==='day'?'flex':'none';
+ if(id==='sum')renderSum();
+ if(id==='week'){renderWeek();pull().then(()=>{if(!$('#p-week').hidden)renderWeek()})}
+ if(id==='hist'){renderHist();pull().then(()=>{if(!$('#p-hist').hidden&&hv!=='a')renderHist()})}
+ window.scrollTo(0,0);
+}
+$('#tabs').onclick=e=>{if(e.target.dataset.t)show(e.target.dataset.t)};
+run();show('day');
+</script>
+</body>
+</html>
