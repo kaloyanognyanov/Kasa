@@ -88,7 +88,7 @@ const cc=(g,b)=>{let tot=0,card=0,wage=0,plat=0,cour=0;
  G.plat.forEach((_,i)=>plat+=g('plat'+i+'o'));G.cour.forEach((_,i)=>cour+=g('cour'+i+'o'));
  G.staff.forEach((s,i)=>{if(s[1]){tot+=g('staff'+i+'t');card+=g('staff'+i+'c')}wage+=g('staff'+i+'w')});
  const bonus=typeof b==='function'?b(tot):b;
- return{tot,card,wage,plat,cour,owed:plat+cour,bonus,ex:g('adv')+tot-card-bonus-wage-g('stock')-g('exp')+g('sup')}};
+ return{tot,card,wage,plat,cour,owed:plat+cour,bonus,ex:g('adv')+tot-card-bonus-wage-plat-cour-g('stock')-g('exp')+g('sup')}};
 
 const inp=k=>`<input data-k="${k}" inputmode="decimal" placeholder="0.00" value="${esc(st[k]??'')}">`;
 const row=(k,l)=>`<div class="row"><label>${l}</label>${inp(k)}</div>`;
