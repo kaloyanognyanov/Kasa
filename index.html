@@ -145,7 +145,7 @@ $('#clr').onclick=()=>{
 function renderSum(){
  const c=cc(n,t=>t*n('pct')/100);
  const L=(l,v)=>`<div class="calc"><span>${l}</span><b>${f(v)}</b></div>`;
- $('#p-sum').innerHTML=`<section><h2>Обобщение · ${fd(st.date)}</h2>${L('Аванс',n('adv'))}${L('Оборот',c.tot)}${L('Разход стока',n('stock'))}${L('Надници',c.wage)}${L('Процент ('+n('pct')+'%)',c.bonus)}</section>`+
+ $('#p-sum').innerHTML=`<section><h2>Обобщение · ${fd(st.date)}</h2>${L('Аванс',n('adv'))}${L('Оборот',c.tot)}${L('Карти',c.card)}${L('Разход стока',n('stock'))}${L('Надници',c.wage)}${L('Процент ('+n('pct')+'%)',c.bonus)}<hr class="rule">${L('Остатък в касата',c.ex)}</section>`+
  `<section><h2>Дължимо от платформи</h2>${L('Общо',c.plat)}<hr class="rule">`+G.plat.map((x,i)=>L(x,n('plat'+i+'o'))).join('')+`</section>`+
  `<section><h2>Дължимо от шофьори</h2>${L('Общо',c.cour)}<hr class="rule">`+G.cour.map((x,i)=>L(x,n('cour'+i+'o'))).join('')+`</section>`;
 }
@@ -213,15 +213,33 @@ async function pull(){
 const stxt=()=>sync==='ok'?'Историята е обща за всички устройства.':sync==='pin'?'Грешен или липсващ ПИН. Историята е само на това устройство.':sync==='off'?'Няма връзка със сървъра. Историята е само на това устройство.':'';
 
 /* История и одит */
+function renderDay(date){
+ const r=(ld('kasa-hist')||[]).find(x=>x.date===date);
+ const nav=`<section><div class="wn"><button data-h="d">‹</button><b>${fd(date)}</b><span style="width:48px"></span></div><div class="mute" style="text-align:center;font-size:14px">${r?esc(r.who||'–'):''}</div></section>`;
+ if(!r||!r.v){$('#p-hist').innerHTML=nav+'<section class="mute">Няма подробности за този ден. Той е запазен с по-стара версия.</section>';return}
+ const g=k=>r.v[k]||0,p=r.pct??3,c=cc(g,t=>t*p/100),cnt=r.cnt||0,d=cnt-c.ex;
+ const L=(l,v)=>`<div class="calc"><span>${l}</span><b>${f(v)}</b></div>`;
+ let o=nav+`<section><h2>Персонал</h2>`+G.staff.map((s,i)=>{
+  const w=g('staff'+i+'w');
+  if(!s[1])return`<div class="pb"><h3>${s[0]}</h3><div class="der"><span>Надница <b>${f(w)}</b></span></div></div>`;
+  const t=g('staff'+i+'t'),cd=g('staff'+i+'c'),bn=t*p/100,rm=t-cd-w-bn-(s[2]?c.plat+c.cour:0);
+  return`<div class="pb"><h3>${s[0]}</h3><div class="g3 ro"><span>Оборот<b>${f(t)}</b></span><span>Карти<b>${f(cd)}</b></span><span>Надница<b>${f(w)}</b></span></div><div class="der"><span>Бонус <b>${f(bn)}</b></span><span>Остатък <b class="${rm<-0.005?'bad':''}">${f(rm)}</b></span></div></div>`}).join('')+`</section>`;
+ o+=`<section><h2>Платформи</h2>`+G.plat.map((x,i)=>L(x,g('plat'+i+'o'))).join('')+`<hr class="rule">${L('Общо платформи',c.plat)}</section>`;
+ o+=`<section><h2>Шофьори</h2>`+G.cour.map((x,i)=>L(x,g('cour'+i+'o'))).join('')+`<hr class="rule">${L('Общо шофьори',c.cour)}</section>`;
+ o+=`<section><h2>Каса</h2>${L('Аванс',g('adv'))}<hr class="rule">${L('Общ оборот',c.tot)}${L('Карти общо',c.card)}${L('Платформи и шофьори (дължимо)',c.owed)}${L('Бонус общо',c.bonus)}${L('Надници общо',c.wage)}${L('Разход стока',g('stock'))}${L('Доставчици (добавя се)',g('sup'))}${L('Други разходи',g('exp'))}<hr class="rule">${L('Очаквани пари в касата',c.ex)}${L('Преброени пари',cnt)}<div class="calc"><span>Разлика</span><b class="${cls(d)}">${sg(d)}</b></div></section>`;
+ $('#p-hist').innerHTML=o;
+}
 let hv='d',adminPin='';
 const hdr=()=>`<div class="tabs">${[['d','Дни'],['w','Седмици']].map(([k,l])=>`<button data-h="${k}" class="${hv===k?'on':''}">${l}</button>`).join('')}</div>`;
+let hd='';
 function renderHist(){
+ if(hv==='x'){renderDay(hd);return}
  if(hv==='a'){$('#p-hist').innerHTML=hdr()+`<section><div class="row"><label>ПИН на админ</label><input id="apin" type="password" value="${esc(adminPin)}" style="width:150px;text-align:left"></div><div class="btns"><button class="p" id="ashow">Покажи одита</button></div><div id="alog" class="hist" style="margin-top:8px"></div></section>`;return}
  const hs=(ld('kasa-hist')||[]).slice().reverse(),ws=(ld('kasa-weeks')||[]).slice().reverse();
  let o;
- if(hv==='d')o=hs.length?hs.map(x=>`<div><span>${fd(x.date)}<br><small class="mute">${esc(x.who||'–')}</small></span><span class="mute">оборот ${f(x.tot)}<br>в касата ${x.cnt===undefined?'–':f(x.cnt)}</span><b class="${cls(x.diff)}">${sg(x.diff)}</b></div>`).join(''):'<span class="mute">Още няма запазени дни.</span>';
+ if(hv==='d')o=hs.length?hs.map(x=>`<div data-d="${x.date}" style="cursor:pointer"><span>${fd(x.date)}<br><small class="mute">${esc(x.who||'–')}</small></span><span class="mute">оборот ${f(x.tot)}<br>в касата ${x.cnt===undefined?'–':f(x.cnt)}</span><b class="${cls(x.diff)}">${sg(x.diff)}</b></div>`).join(''):'<span class="mute">Още няма запазени дни.</span>';
  else o=ws.length?ws.map(x=>`<div><span>${fd(x.ws).slice(0,5)} – ${fd(addD(x.ws,6))}<br><small class="mute">${esc(x.who||'–')} · ${x.days} дни</small></span><span class="mute">оборот ${f(x.tot)}${x.chg==null?'':' ('+(x.chg>=0?'▲':'▼')+' '+Math.abs(x.chg).toFixed(1)+'%)'}<br>в касата ${f(x.cnt)}</span><b class="${cls(x.diff)}">${sg(x.diff)}</b></div>`).join(''):'<span class="mute">Още няма запазени седмици.</span>';
- $('#p-hist').innerHTML=hdr()+'<section class="hist">'+o+'</section><div class="hint">'+stxt()+'</div>';
+ $('#p-hist').innerHTML=hdr()+'<section class="hist">'+o+'</section><div class="hint">'+(hv==='d'?'Натисни ден, за да видиш подробностите. ':'')+stxt()+'</div>';
 }
 async function showAudit(){
  adminPin=$('#apin').value;const el=$('#alog');el.textContent='…';
@@ -232,7 +250,7 @@ async function showAudit(){
   el.innerHTML=j.length?j.map(x=>`<div><span>${new Date(x.ts).toLocaleString('bg-BG',{dateStyle:'short',timeStyle:'short'})}<br><small class="mute">${esc(x.who||'–')}</small></span><span class="mute">${x.t==='day'?'ден':'седмица'} ${fd(x.key)}<br>оборот ${f(x.tot||0)}${x.old?' (преди '+f(x.old.tot||0)+')':''}</span><b class="${cls(x.diff||0)}">${sg(x.diff||0)}</b></div>`).join(''):'<span class="mute">Няма записи.</span>';
  }catch(e){el.textContent=['401','403'].includes(String(e.message))?'Грешен ПИН на админ.':'Няма връзка със сървъра.'}
 }
-$('#p-hist').onclick=e=>{if(e.target.dataset.h){hv=e.target.dataset.h;renderHist()}else if(e.target.id==='ashow')showAudit()};
+$('#p-hist').onclick=e=>{const d=e.target.closest('[data-d]');if(d){hv='x';hd=d.dataset.d;renderHist();window.scrollTo(0,0)}else if(e.target.dataset.h){hv=e.target.dataset.h;renderHist()}else if(e.target.id==='ashow')showAudit()};
 
 const T=[['day','Ден'],['sum','Обобщение'],['week','Седмица'],['hist','История']];
 $('#tabs').innerHTML=T.map(([id,l])=>`<button data-t="${id}">${l}</button>`).join('');
