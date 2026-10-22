@@ -145,7 +145,7 @@ $('#clr').onclick=()=>{
 function renderSum(){
  const c=cc(n,t=>t*n('pct')/100);
  const L=(l,v)=>`<div class="calc"><span>${l}</span><b>${f(v)}</b></div>`;
- $('#p-sum').innerHTML=`<section><h2>Обобщение · ${fd(st.date)}</h2>${L('Аванс',n('adv'))}${L('Оборот',c.tot)}${L('Карти',c.card)}${L('Разход стока',n('stock'))}${L('Надници',c.wage)}${L('Процент ('+n('pct')+'%)',c.bonus)}<hr class="rule">${L('Остатък в касата',c.ex)}</section>`+
+ $('#p-sum').innerHTML=`<section><h2>Обобщение · ${fd(st.date)}</h2>${L('Аванс + оборот',n('adv')+c.tot)}<hr class="rule">${L('Аванс',n('adv'))}${L('Оборот',c.tot)}${L('Карти',c.card)}${L('Разход стока',n('stock'))}${n('exp')?L('Други разходи',n('exp')):''}${L('Надници',c.wage)}${L('Процент ('+n('pct')+'%)',c.bonus)}${L('Заплати',c.wage+c.bonus)}<hr class="rule">${L('Остатък в касата',c.ex)}</section>`+
  `<section><h2>Дължимо от платформи</h2>${L('Общо',c.plat)}<hr class="rule">`+G.plat.map((x,i)=>L(x,n('plat'+i+'o'))).join('')+`</section>`+
  `<section><h2>Дължимо от шофьори</h2>${L('Общо',c.cour)}<hr class="rule">`+G.cour.map((x,i)=>L(x,n('cour'+i+'o'))).join('')+`</section>`;
 }
