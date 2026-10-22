@@ -24,7 +24,8 @@ h3{font-size:15px;margin:0 0 6px}
 .row{display:flex;align-items:center;gap:10px;padding:4px 0}
 .row label{flex:1;font-size:15px}
 input{font:inherit;color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:116px;text-align:right}
-input:focus{outline:2px solid var(--acc);outline-offset:1px}
+input:focus,textarea:focus{outline:2px solid var(--acc);outline-offset:1px}
+textarea{font:inherit;color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:100%;resize:vertical;margin:4px 0}
 .pb{border-top:1px solid var(--line);padding:9px 0}.pb:first-of-type{border:0;padding-top:2px}
 .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 .g3 label,.ro span{display:flex;flex-direction:column;gap:2px;font-size:12px;color:var(--mute)}
@@ -84,6 +85,8 @@ G.staff.forEach((s,i)=>{if(s[1]){SK.push('staff'+i+'t');SK.push('staff'+i+'c')}S
 G.cour.forEach((_,i)=>{SK.push('cour'+i+'o');LK.push('cour'+i+'o')});
 G.plat.forEach((_,i)=>{SK.push('plat'+i+'o');LK.push('plat'+i+'o')});
 ['adv','stock','sup','exp','cnt'].forEach(k=>SK.push(k));
+G.staff.forEach((s,i)=>{if(s[2])LK.push('staff'+i+'c')});
+LK.push('stock','exp');
 const cc=(g,b)=>{let tot=0,card=0,wage=0,plat=0,cour=0;
  G.plat.forEach((_,i)=>plat+=g('plat'+i+'o'));G.cour.forEach((_,i)=>cour+=g('cour'+i+'o'));
  G.staff.forEach((s,i)=>{if(s[1]){tot+=g('staff'+i+'t');card+=g('staff'+i+'c')}wage+=g('staff'+i+'w')});
@@ -97,11 +100,11 @@ const hint=t=>`<div class="hint">${t}</div>`;
 const lrow=(k,nm)=>`<div class="lr"><span>${nm}</span><b id="t_${k}">0.00</b><input id="a_${k}" inputmode="decimal" placeholder="сума"><button data-add="${k}">+</button><button data-undo="${k}">↶</button></div><div class="ent" id="e_${k}"></div>`;
 $('#p-day').innerHTML=
 `<section><h2>Персонал</h2>`+G.staff.map((s,i)=>s[1]?
-`<div class="pb"><h3>${s[0]}</h3><div class="g3"><label>Оборот${inp('staff'+i+'t')}</label><label>Карти${inp('staff'+i+'c')}</label><label>Надница${inp('staff'+i+'w')}</label></div>${s[2]?'<div class="hint" id="bp"></div>':''}<div class="der"><span>Бонус <b id="b${i}">0.00</b></span><span>Остатък <b id="r${i}">0.00</b></span></div></div>`:
+`<div class="pb"><h3>${s[0]}</h3>${s[2]?`<div class="g3" style="grid-template-columns:repeat(2,1fr)"><label>Оборот${inp('staff'+i+'t')}</label><label>Надница${inp('staff'+i+'w')}</label></div>${lrow('staff'+i+'c','Карти')}`:`<div class="g3"><label>Оборот${inp('staff'+i+'t')}</label><label>Карти${inp('staff'+i+'c')}</label><label>Надница${inp('staff'+i+'w')}</label></div>`}${s[2]?'<div class="hint" id="bp"></div>':''}<div class="der"><span>Бонус <b id="b${i}">0.00</b></span><span>Остатък <b id="r${i}">0.00</b></span></div></div>`:
 `<div class="pb"><h3>${s[0]}</h3><div class="g3"><label>Надница${inp('staff'+i+'w')}</label></div></div>`).join('')+`</section>`+
 `<section><h2>Платформи</h2>${hint('Поръчки през деня. Те са част от оборота на бармана, не се добавят към него.')}`+G.plat.map((nm,i)=>lrow('plat'+i+'o',nm)).join('')+`<hr class="rule">${cr('Общо платформи','sPlat')}</section>`+
 `<section><h2>Шофьори</h2>${hint('Оборот, който още не е върнат.')}`+G.cour.map((nm,i)=>lrow('cour'+i+'o',nm)).join('')+`<hr class="rule">${cr('Общо шофьори','sCour')}</section>`+
-`<section><h2>Каса</h2>${row('adv','Аванс (добавя се към касата)')}<hr class="rule">${cr('Общ оборот','sTot')}${cr('Карти общо','sCard')}${cr('Платформи и шофьори (дължимо)','sOwed')}${row('pct','Бонус от оборота (%)')}${cr('Бонус общо','sBonus')}${cr('Надници общо','sWage')}${row('stock','Разход стока')}${row('sup','Доставчици (добавя се към касата)')}${row('exp','Други разходи')}${hint('Сумата от доставчици се добавя към очакваните пари в касата.')}<hr class="rule">${cr('Очаквани пари в касата','sExp')}${row('cnt','<b>Преброени пари</b>')}${cr('Разлика','sDiff')}</section>`+
+`<section><h2>Каса</h2>${row('adv','Аванс (добавя се към касата)')}<hr class="rule">${cr('Общ оборот','sTot')}${cr('Карти общо','sCard')}${cr('Платформи и шофьори (дължимо)','sOwed')}${row('pct','Бонус от оборота (%)')}${cr('Бонус общо','sBonus')}${cr('Надници общо','sWage')}${lrow('stock','Разход стока')}${row('sup','Доставчици (добавя се към касата)')}${lrow('exp','Други разходи')}${hint('Сумата от доставчици се добавя към очакваните пари в касата.')}<hr class="rule">${cr('Очаквани пари в касата','sExp')}${row('cnt','<b>Преброени пари</b>')}${cr('Разлика','sDiff')}</section>`+
 `<section><h2>Отчет</h2><div class="row"><label>Дата</label><input type="date" data-k="date" value="${st.date}" style="width:150px;text-align:left"></div><div class="row"><label>Направен от</label><input data-k="who" value="${esc(st.who??'')}" placeholder="Име" style="width:150px;text-align:left"></div><div class="btns" style="margin-top:8px"><button class="p" id="save">Запази деня</button><button id="clr">Нов ден</button></div><div id="msg" class="mute" style="margin-top:8px;font-size:14px"></div></section>`;
 
 let clrArm=0;
@@ -128,7 +131,7 @@ document.addEventListener('click',e=>{const a=e.target.dataset.add,u=e.target.da
 $('#save').onclick=()=>{
  const r=run();if(r.d===null){msg('Първо въведи преброените пари.',1);return}
  const hs=ld('kasa-hist')||[],v={};SK.forEach(k=>v[k]=n(k));
- const e={date:st.date||iso(),who:(st.who||'').trim(),pct:n('pct'),v,tot:r.c.tot,bonus:r.c.bonus,ex:r.c.ex,cnt:n('cnt'),diff:r.d};
+ const e={date:st.date||iso(),who:(st.who||'').trim(),note:(st.expNote||'').trim(),pct:n('pct'),v,tot:r.c.tot,bonus:r.c.bonus,ex:r.c.ex,cnt:n('cnt'),diff:r.d};
  const j=hs.findIndex(x=>x.date===e.date);if(j>=0)hs[j]=e;else hs.push(e);
  hs.sort((a,b)=>a.date<b.date?-1:1);
  const ok=sv('kasa-hist',hs.slice(-200));
@@ -142,7 +145,7 @@ $('#clr').onclick=()=>{
 };
 
 /* Обобщение */
-function renderSum(){
+function renderSumOld(){
  const c=cc(n,t=>t*n('pct')/100);
  const L=(l,v)=>`<div class="calc"><span>${l}</span><b>${f(v)}</b></div>`;
  $('#p-sum').innerHTML=`<section><h2>Обобщение · ${fd(st.date)}</h2>${L('Аванс + оборот',n('adv')+c.tot)}<hr class="rule">${L('Аванс',n('adv'))}${L('Оборот',c.tot)}${L('Карти',c.card)}${L('Разход стока',n('stock'))}${n('exp')?L('Други разходи',n('exp')):''}${L('Надници',c.wage)}${L('Процент ('+n('pct')+'%)',c.bonus)}${L('Заплати',c.wage+c.bonus)}<hr class="rule">${L('Остатък в касата',c.ex)}</section>`+
@@ -151,6 +154,14 @@ function renderSum(){
 }
 
 /* Седмица */
+function sumHtml(g,p,date,note,ed){
+ const c=cc(g,t=>t*p/100),L=(l,v)=>`<div class="calc"><span>${l}</span><b>${f(v)}</b></div>`;
+ const nt=ed?`<textarea data-k="expNote" rows="2" placeholder="Какви други разходи са били?">${esc(note||'')}</textarea>`:(note?`<div class="hint">${esc(note)}</div>`:'');
+ return `<section><h2>Обобщение · ${fd(date)}</h2>${L('Аванс + оборот',g('adv')+c.tot)}<hr class="rule">${L('Аванс',g('adv'))}${L('Оборот',c.tot)}${L('Карти',c.card)}${L('Разход стока',g('stock'))}${g('exp')?L('Други разходи',g('exp')):''}${nt}${L('Надници',c.wage)}${L('Процент ('+p+'%)',c.bonus)}${L('Заплати',c.wage+c.bonus)}<hr class="rule">${L('Остатък в касата',c.ex)}</section>`+
+ `<section><h2>Дължимо от платформи</h2>${L('Общо',c.plat)}<hr class="rule">`+G.plat.map((x,i)=>L(x,g('plat'+i+'o'))).join('')+`</section>`+
+ `<section><h2>Дължимо от шофьори</h2>${L('Общо',c.cour)}<hr class="rule">`+G.cour.map((x,i)=>L(x,g('cour'+i+'o'))).join('')+`</section>`;
+}
+function renderSum(){$('#p-sum').innerHTML=sumHtml(n,n('pct'),st.date,st.expNote,1)}
 let wk=mon(iso());
 function agg(ws){
  const we=addD(ws,6),hs=(ld('kasa-hist')||[]).filter(x=>x.date>=ws&&x.date<=we);
@@ -219,7 +230,7 @@ function renderDay(date){
  if(!r||!r.v){$('#p-hist').innerHTML=nav+'<section class="mute">Няма подробности за този ден. Той е запазен с по-стара версия.</section>';return}
  const g=k=>r.v[k]||0,p=r.pct??3,c=cc(g,t=>t*p/100),cnt=r.cnt||0,d=cnt-c.ex;
  const L=(l,v)=>`<div class="calc"><span>${l}</span><b>${f(v)}</b></div>`;
- let o=nav+`<section><h2>Персонал</h2>`+G.staff.map((s,i)=>{
+ let o=nav+sumHtml(g,p,date,r.note,0)+`<section><h2>Персонал</h2>`+G.staff.map((s,i)=>{
   const w=g('staff'+i+'w');
   if(!s[1])return`<div class="pb"><h3>${s[0]}</h3><div class="der"><span>Надница <b>${f(w)}</b></span></div></div>`;
   const t=g('staff'+i+'t'),cd=g('staff'+i+'c'),bn=t*p/100,rm=t-cd-w-bn-(s[2]?c.plat+c.cour:0);
