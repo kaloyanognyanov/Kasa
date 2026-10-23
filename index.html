@@ -26,6 +26,7 @@ h3{font-size:15px;margin:0 0 6px}
 input{font:inherit;color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:116px;text-align:right}
 input:focus,textarea:focus{outline:2px solid var(--acc);outline-offset:1px}
 textarea{font:inherit;color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:100%;resize:vertical;margin:4px 0}
+summary{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:17px;font-weight:700;list-style:none}summary::-webkit-details-marker{display:none}summary::before{content:'▸';color:var(--mute)}details[open]>summary::before{content:'▾'}summary span{flex:1}summary b{font-variant-numeric:tabular-nums}
 .pb{border-top:1px solid var(--line);padding:9px 0}.pb:first-of-type{border:0;padding-top:2px}
 .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 .g3 label,.ro span{display:flex;flex-direction:column;gap:2px;font-size:12px;color:var(--mute)}
@@ -63,7 +64,8 @@ textarea{font:inherit;color:var(--ink);background:transparent;border:1px solid v
 
 <script>
 const $=s=>document.querySelector(s);
-const G={staff:[['Сервитьор 1',1],['Сервитьор 2',1],['Сервитьор 3',1],['Барман',1,1],['Миячка',0],['Друг помощен персонал',0]],cour:['Здравко','Вальо','Марто'],plat:['Glovo','Wolt','Bolt','Сайт']};
+const G={staff:[['Сервитьор 1 · Тони',1],['Сервитьор 2 · Сашо',1],['Сервитьор 3 · Сиси',1],['Барман',1,1],['Миячка',0],['Друг помощен персонал',0],['Сервитьор 4',1]],cour:['Здравко','Вальо','Марто'],plat:['Glovo','Wolt','Bolt','Сайт']};
+const SM=f=>[0,1,2,6,3,4,5].map(i=>f(G.staff[i],i));
 const ld=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
 const sv=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}};
 const f=x=>x.toFixed(2);
@@ -76,7 +78,7 @@ const mon=s=>addD(s,-((pd(s).getDay()+6)%7));
 const fd=s=>{const p=String(s).split('-');return p.length===3?p[2]+'.'+p[1]+'.'+p[0]:s};
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let st=ld('kasa2-state')||{};
-if(st.pct===undefined)st.pct='3';
+st.pct='3';
 if(!st.date)st.date=iso();
 const val=s=>String(s||'').split('+').reduce((a,p)=>a+(parseFloat(p.replace(',','.'))||0),0);
 const n=k=>val(st[k]);
@@ -99,12 +101,12 @@ const cr=(l,id)=>`<div class="calc"><span>${l}</span><b id="${id}">0.00</b></div
 const hint=t=>`<div class="hint">${t}</div>`;
 const lrow=(k,nm)=>`<div class="lr"><span>${nm}</span><b id="t_${k}">0.00</b><input id="a_${k}" inputmode="decimal" placeholder="сума"><button data-add="${k}">+</button><button data-undo="${k}">↶</button></div><div class="ent" id="e_${k}"></div>`;
 $('#p-day').innerHTML=
-`<section><h2>Персонал</h2>`+G.staff.map((s,i)=>s[1]?
+`<section><h2>Персонал</h2>`+SM((s,i)=>s[1]?
 `<div class="pb"><h3>${s[0]}</h3>${s[2]?`<div class="g3" style="grid-template-columns:repeat(2,1fr)"><label>Оборот${inp('staff'+i+'t')}</label><label>Надница${inp('staff'+i+'w')}</label></div>${lrow('staff'+i+'c','Карти')}`:`<div class="g3"><label>Оборот${inp('staff'+i+'t')}</label><label>Карти${inp('staff'+i+'c')}</label><label>Надница${inp('staff'+i+'w')}</label></div>`}${s[2]?'<div class="hint" id="bp"></div>':''}<div class="der"><span>Бонус <b id="b${i}">0.00</b></span><span>Остатък <b id="r${i}">0.00</b></span></div></div>`:
 `<div class="pb"><h3>${s[0]}</h3><div class="g3"><label>Надница${inp('staff'+i+'w')}</label></div></div>`).join('')+`</section>`+
 `<section><h2>Платформи</h2>${hint('Поръчки през деня. Те са част от оборота на бармана, не се добавят към него.')}`+G.plat.map((nm,i)=>lrow('plat'+i+'o',nm)).join('')+`<hr class="rule">${cr('Общо платформи','sPlat')}</section>`+
 `<section><h2>Шофьори</h2>${hint('Оборот, който още не е върнат.')}`+G.cour.map((nm,i)=>lrow('cour'+i+'o',nm)).join('')+`<hr class="rule">${cr('Общо шофьори','sCour')}</section>`+
-`<section><h2>Каса</h2>${row('adv','Аванс (добавя се към касата)')}<hr class="rule">${cr('Общ оборот','sTot')}${cr('Карти общо','sCard')}${cr('Платформи и шофьори (дължимо)','sOwed')}${row('pct','Бонус от оборота (%)')}${cr('Бонус общо','sBonus')}${cr('Надници общо','sWage')}${lrow('stock','Разход стока')}${row('sup','Доставчици (добавя се към касата)')}${lrow('exp','Други разходи')}${hint('Сумата от доставчици се добавя към очакваните пари в касата.')}<hr class="rule">${cr('Очаквани пари в касата','sExp')}${row('cnt','<b>Преброени пари</b>')}${cr('Разлика','sDiff')}</section>`+
+`<section><h2>Каса</h2>${row('adv','Аванс (добавя се към касата)')}<hr class="rule">${cr('Общ оборот','sTot')}${cr('Карти общо','sCard')}${cr('Платформи и шофьори (дължимо)','sOwed')}${cr('Бонус общо (3%)','sBonus')}${cr('Надници общо','sWage')}${lrow('stock','Разход стока')}${row('sup','Доставчици (добавя се към касата)')}${lrow('exp','Други разходи')}${hint('Сумата от доставчици се добавя към очакваните пари в касата.')}<hr class="rule">${cr('Очаквани пари в касата','sExp')}${row('cnt','<b>Преброени пари</b>')}${cr('Разлика','sDiff')}</section>`+
 `<section><h2>Отчет</h2><div class="row"><label>Дата</label><input type="date" data-k="date" value="${st.date}" style="width:150px;text-align:left"></div><div class="row"><label>Направен от</label><input data-k="who" value="${esc(st.who??'')}" placeholder="Име" style="width:150px;text-align:left"></div><div class="btns" style="margin-top:8px"><button class="p" id="save">Запази деня</button><button id="clr">Нов ден</button></div><div id="msg" class="mute" style="margin-top:8px;font-size:14px"></div></section>`;
 
 let clrArm=0;
@@ -157,9 +159,9 @@ function renderSumOld(){
 function sumHtml(g,p,date,note,ed){
  const c=cc(g,t=>t*p/100),L=(l,v)=>`<div class="calc"><span>${l}</span><b>${f(v)}</b></div>`;
  const nt=ed?`<textarea data-k="expNote" rows="2" placeholder="Какви други разходи са били?">${esc(note||'')}</textarea>`:(note?`<div class="hint">${esc(note)}</div>`:'');
- return `<section><h2>Обобщение · ${fd(date)}</h2>${L('Аванс + оборот',g('adv')+c.tot)}<hr class="rule">${L('Аванс',g('adv'))}${L('Оборот',c.tot)}${L('Карти',c.card)}${L('Разход стока',g('stock'))}${g('exp')?L('Други разходи',g('exp')):''}${nt}${L('Надници',c.wage)}${L('Процент ('+p+'%)',c.bonus)}${L('Заплати',c.wage+c.bonus)}<hr class="rule">${L('Остатък в касата',c.ex)}</section>`+
- `<section><h2>Дължимо от платформи</h2>${L('Общо',c.plat)}<hr class="rule">`+G.plat.map((x,i)=>L(x,g('plat'+i+'o'))).join('')+`</section>`+
- `<section><h2>Дължимо от шофьори</h2>${L('Общо',c.cour)}<hr class="rule">`+G.cour.map((x,i)=>L(x,g('cour'+i+'o'))).join('')+`</section>`;
+ return `<section><h2>Обобщение · ${fd(date)}</h2>${L('Аванс + оборот',g('adv')+c.tot)}<hr class="rule">${L('Аванс',g('adv'))}${L('Оборот',c.tot)}${L('Карти',c.card)}${L('Разход стока',g('stock'))}${g('exp')?L('Други разходи',g('exp')):''}${nt}${L('Надници',G.staff.reduce((a,s,i)=>a+(s[1]?g('staff'+i+'w'):0),0))}${G.staff.map((s,i)=>!s[1]&&g('staff'+i+'w')?L(s[0],g('staff'+i+'w')):'').join('')}${L('Процент ('+p+'%)',c.bonus)}${L('Заплати',c.wage+c.bonus)}<hr class="rule">${L('Остатък в касата',c.ex)}</section>`+
+ `<section><details><summary><span>Дължимо от платформи</span><b>${f(c.plat)}</b></summary><hr class="rule">`+G.plat.map((x,i)=>L(x,g('plat'+i+'o'))).join('')+`</details></section>`+
+ `<section><details><summary><span>Дължимо от шофьори</span><b>${f(c.cour)}</b></summary><hr class="rule">`+G.cour.map((x,i)=>L(x,g('cour'+i+'o'))).join('')+`</details></section>`;
 }
 function renderSum(){$('#p-sum').innerHTML=sumHtml(n,n('pct'),st.date,st.expNote,1)}
 let wk=mon(iso());
@@ -179,7 +181,7 @@ function renderWeek(){
  const L=(l,x,y)=>`<div class="calc"><span>${l}</span><span><b>${f(x)}</b> <small class="mute">${pc(x,y,h)}</small></span></div>`;
  let o=`<section><div class="wn"><button id="wp">‹</button><b>${fd(wk)} – ${fd(we)}</b><button id="wnx">›</button></div><div class="mute" style="text-align:center;font-size:14px">Дни с отчет: ${a.days} от 7</div></section>`;
  if(!a.days){$('#p-week').innerHTML=o+'<section class="mute">Няма запазени дни за тази седмица. Запази дневните отчети от таб „Ден“.</section>';return}
- o+=`<section><h2>Персонал</h2>`+G.staff.map((s,i)=>{
+ o+=`<section><h2>Персонал</h2>`+SM((s,i)=>{
   const w=a.s['staff'+i+'w'];
   if(!s[1])return`<div class="pb"><h3>${s[0]}</h3><div class="der"><span>Надница <b>${f(w)}</b></span></div></div>`;
   const t=a.s['staff'+i+'t'],cd=a.s['staff'+i+'c'],r=t-cd-w-a.b[i]-(s[2]?a.c.plat+a.c.cour:0);
@@ -230,7 +232,7 @@ function renderDay(date){
  if(!r||!r.v){$('#p-hist').innerHTML=nav+'<section class="mute">Няма подробности за този ден. Той е запазен с по-стара версия.</section>';return}
  const g=k=>r.v[k]||0,p=r.pct??3,c=cc(g,t=>t*p/100),cnt=r.cnt||0,d=cnt-c.ex;
  const L=(l,v)=>`<div class="calc"><span>${l}</span><b>${f(v)}</b></div>`;
- let o=nav+sumHtml(g,p,date,r.note,0)+`<section><h2>Персонал</h2>`+G.staff.map((s,i)=>{
+ let o=nav+sumHtml(g,p,date,r.note,0)+`<section><h2>Персонал</h2>`+SM((s,i)=>{
   const w=g('staff'+i+'w');
   if(!s[1])return`<div class="pb"><h3>${s[0]}</h3><div class="der"><span>Надница <b>${f(w)}</b></span></div></div>`;
   const t=g('staff'+i+'t'),cd=g('staff'+i+'c'),bn=t*p/100,rm=t-cd-w-bn-(s[2]?c.plat+c.cour:0);
