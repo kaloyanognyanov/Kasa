@@ -16,7 +16,7 @@
 [hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 -apple-system,"Segoe UI",Roboto,sans-serif;max-width:520px;margin-inline:auto;padding:12px 12px 110px}
 .tabs{display:flex;gap:4px;margin-bottom:12px}
-.tabs button{flex:1;padding:10px 2px;font:inherit;font-size:13px;font-weight:600;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:10px}
+.tabs button{flex:1;padding:10px 2px;font:inherit;font-size:12px;font-weight:600;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:10px}
 .tabs button.on{background:var(--acc);color:var(--accfg);border-color:var(--acc)}
 section{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px}
 h2{font-size:17px;margin:0 0 6px}
@@ -27,6 +27,7 @@ input{font:inherit;color:var(--ink);background:transparent;border:1px solid var(
 input:focus,textarea:focus{outline:2px solid var(--acc);outline-offset:1px}
 textarea{font:inherit;color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:100%;resize:vertical;margin:4px 0}
 summary{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:17px;font-weight:700;list-style:none}summary::-webkit-details-marker{display:none}summary::before{content:'▸';color:var(--mute)}details[open]>summary::before{content:'▾'}summary span{flex:1}summary b{font-variant-numeric:tabular-nums}
+.bi{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:15px}.bi:last-child{border:0}.bi .nm{flex:1}.bi small{font-size:12px}.bi input{width:64px;padding:7px 6px}.bi button{width:36px;padding:6px 0;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:8px;font:inherit}.bo{font-size:20px;color:var(--mute)}.bb{font:inherit;font-weight:600;padding:9px 12px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--ink)}.hist .bh{display:block;border:0;padding:12px 0 2px;font-weight:700;font-size:13px;color:var(--mute)}
 .pb{border-top:1px solid var(--line);padding:9px 0}.pb:first-of-type{border:0;padding-top:2px}
 .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 .g3 label,.ro span{display:flex;flex-direction:column;gap:2px;font-size:12px;color:var(--mute)}
@@ -59,7 +60,7 @@ summary{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:17px;fo
 </head>
 <body>
 <nav class="tabs" id="tabs"></nav>
-<main><div id="p-day"></div><div id="p-sum" hidden></div><div id="p-week" hidden></div><div id="p-hist" hidden></div></main>
+<main><div id="p-day"></div><div id="p-sum" hidden></div><div id="p-bar" hidden></div><div id="p-week" hidden></div><div id="p-hist" hidden></div></main>
 <div class="bar" id="bar"><div><small>Очаквано в касата</small><b id="bExp">0.00</b></div><div style="text-align:right"><small id="bLbl">Разлика</small><b id="bDiff">–</b></div></div>
 
 <script>
@@ -78,7 +79,7 @@ const mon=s=>addD(s,-((pd(s).getDay()+6)%7));
 const fd=s=>{const p=String(s).split('-');return p.length===3?p[2]+'.'+p[1]+'.'+p[0]:s};
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let st=ld('kasa2-state')||{};
-st.pct='3';
+st.pct='3';st.bar=st.bar||{};
 if(!st.date)st.date=iso();
 const val=s=>String(s||'').split('+').reduce((a,p)=>a+(parseFloat(p.replace(',','.'))||0),0);
 const n=k=>val(st[k]);
@@ -133,7 +134,7 @@ document.addEventListener('click',e=>{const a=e.target.dataset.add,u=e.target.da
 $('#save').onclick=()=>{
  const r=run();if(r.d===null){msg('Първо въведи преброените пари.',1);return}
  const hs=ld('kasa-hist')||[],v={};SK.forEach(k=>v[k]=n(k));
- const e={date:st.date||iso(),who:(st.who||'').trim(),note:(st.expNote||'').trim(),pct:n('pct'),v,tot:r.c.tot,bonus:r.c.bonus,ex:r.c.ex,cnt:n('cnt'),diff:r.d};
+ const e={date:st.date||iso(),who:(st.who||'').trim(),note:(st.expNote||'').trim(),bar:barList(),pct:n('pct'),v,tot:r.c.tot,bonus:r.c.bonus,ex:r.c.ex,cnt:n('cnt'),diff:r.d};
  const j=hs.findIndex(x=>x.date===e.date);if(j>=0)hs[j]=e;else hs.push(e);
  hs.sort((a,b)=>a.date<b.date?-1:1);
  const ok=sv('kasa-hist',hs.slice(-200));
@@ -142,8 +143,8 @@ $('#save').onclick=()=>{
 $('#clr').onclick=()=>{
  if(!clrArm){clrArm=1;$('#clr').textContent='Натисни пак';setTimeout(()=>{clrArm=0;$('#clr').textContent='Нов ден'},3000);return}
  clrArm=0;$('#clr').textContent='Нов ден';
- st={pct:st.pct,who:st.who,date:iso()};sv('kasa2-state',st);
- document.querySelectorAll('input[data-k]').forEach(i=>i.value=st[i.dataset.k]??'');run();msg('');window.scrollTo(0,0);
+ st={pct:st.pct,who:st.who,date:iso(),bar:{}};sv('kasa2-state',st);
+ document.querySelectorAll('input[data-k]').forEach(i=>i.value=st[i.dataset.k]??'');run();msg('');renderBar();window.scrollTo(0,0);
 };
 
 /* Обобщение */
@@ -232,7 +233,7 @@ function renderDay(date){
  if(!r||!r.v){$('#p-hist').innerHTML=nav+'<section class="mute">Няма подробности за този ден. Той е запазен с по-стара версия.</section>';return}
  const g=k=>r.v[k]||0,p=r.pct??3,c=cc(g,t=>t*p/100),cnt=r.cnt||0,d=cnt-c.ex;
  const L=(l,v)=>`<div class="calc"><span>${l}</span><b>${f(v)}</b></div>`;
- let o=nav+sumHtml(g,p,date,r.note,0)+`<section><h2>Персонал</h2>`+SM((s,i)=>{
+ let o=nav+sumHtml(g,p,date,r.note,0)+(r.bar&&r.bar.length?`<section><h2>Заявка за бар</h2>`+r.bar.map(x=>`<div class="calc"><span>${esc(x)}</span></div>`).join('')+`</section>`:'')+`<section><h2>Персонал</h2>`+SM((s,i)=>{
   const w=g('staff'+i+'w');
   if(!s[1])return`<div class="pb"><h3>${s[0]}</h3><div class="der"><span>Надница <b>${f(w)}</b></span></div></div>`;
   const t=g('staff'+i+'t'),cd=g('staff'+i+'c'),bn=t*p/100,rm=t-cd-w-bn-(s[2]?c.plat+c.cour:0);
@@ -265,13 +266,59 @@ async function showAudit(){
 }
 $('#p-hist').onclick=e=>{const d=e.target.closest('[data-d]');if(d){hv='x';hd=d.dataset.d;renderHist();window.scrollTo(0,0)}else if(e.target.dataset.h){hv=e.target.dataset.h;renderHist()}else if(e.target.id==='ashow')showAudit()};
 
-const T=[['day','Ден'],['sum','Обобщение'],['week','Седмица'],['hist','История']];
+/* Заявка за бар */
+const BAR=[
+['Вино наливно','Бяло|Розе|Червено'],
+['Бира','Бернард светъл|Бернард тъмен|Бернард червен|Каменица|Кирин ичибан|Корона|Наливна|Старопрамен|Стела 0.0%|Хайнекен|Хогардън|Шоферхофер'],
+['Вода','Голяма вода|Голяма газирана вода|Голяма Пелегрино|Малка вода|Малка газирана вода|Малка Пелегрино'],
+['Сиропи','Ананас|Бъз|Ванилия|Диня|Кокос|Малина|Мента|Праскова|Пъпеш|Череша|Ягода'],
+['Студен чай','Лимон|Праскова'],
+['Сок голям','Ананас|Вишна'],
+['Сок малък','Вишна|Горски плод|Портокал|Праскова|Ябълка'],
+['Други','Безкофеиново кафе|Грейпфрут|Кафе зърно|Кафе Нес кафе|Лимони|Мента|Портокали'],
+['Ракия 50 мл','Бургас 63|Бургас 63 Траминерова отлежала|Бургаска мускатова|Отлежала мускатова (виж снимката)|Културна отлежала|Сливенска Перла|Сръбска дюлева (Вино Жупа)|Сръбска дюлява ракия|Стралджанска мускатова|Сунгурларска специална|Тиквеш Лозова|Троянска сливова отлежала 3 г.'],
+['Аперитиви и дижестиви','Бейлис 50 мл|Бранка Мента 50 мл|Йегермайстер 50 мл|Ликьор Империал Мандарин Наполеон 50 мл|Лимончело ди Капри 50 мл|Мартини Бианко 100 мл|Мартини Драй 100 мл|Никста Ликор де Елоре 50 мл|Пасоа 50 мл|Фернет Бранка 50 мл|Хосе Куерво 50 мл'],
+['Уиски 50 мл','Балънтайнс|Бушмилс|Бушмилс Блек Буш|Гленфидих 12 г.|Джак Даниелс|Джак Даниелс Джентълмен|Джак Даниелс Сингъл Барел|Джей енд Би|Джеймсън|Джеймсън Блек Барел|Джим Бийм|Джони Уокър Блек Лейбъл 12 г.|Джони Уокър Ред Лейбъл|Дъмпъл 15 г.|Мейкърс Марк|Пади|Тюламор Дю|Чивас Регал 12 г.'],
+['Водка 50 мл','Абсолют|Белуга|Грей Гус|Рейка|Финландия'],
+['Джин 50 мл','Бомбай сапфир|Гордънс|Малфи розов джин|Танкерей'],
+['Малки бутилки','Алма Каберне Совиньон 187 мл|Алма Розе 187 мл|Алма Совиньон Блан 187 мл|Бабич Совиньон Блан 375 мл|Ел Кото Бланко 375 мл|Ел Кото Крианца 375 мл|Кера Тамара Совиньон Блан 375 мл|Лава Мерло & Каберне 375 мл|Лава Розе 375 мл|Ле Фюме Бланш Совиньон Блан 375 мл|Поезие Розе Блъш 375 мл|Санта Сара Блек С. Ред 375 мл|Санта Сара Блек С. Уайт 375 мл|Шато Астрос Розе 375 мл'],
+['Пенливо вино','Палмер Брют Ризърв 750 мл|Просеко Брют Арджео 750 мл|Просеко Брют Арджео 250 мл|Пенливо Аперол'],
+['Бели вина 750 мл','Бабич Совиньон Блан|Верментино IGT Кастелани|Кера Тамара Совиньон Блан|Киви Кюве Совиньон Блан (Франция)|Л Фюме Бланш Совиньон Блан|Лава Совиньон Блан & Шардоне & Ризлинг|Поезие Пино Гриджо|Ризлинг Трокен Др. Лоозен|Ронгопай Совиньон Блан|Санта Сара Блек С. Уайт|Санта Сара Траминер|Ска Гарганега & Шардоне|Фронтера Совиньон Блан'],
+['Розе вина 750 мл','Бай Отт Розе Кот де Прованс|Лава Розе Мелник|Ло Масулие Розе|Санта Сара Блек С. Розе|Санта Сара Блек С. Уайт (в розе)|Шато Астрос Розе'],
+['Червени вина 750 мл','Ардженто Малбек|Бин 60 Мавруд Санта Сара|Блек С. Ред Санта Сара|Вила Волф Пино Ноар|Дзиндзифките Каберне Фран|Ел Кото Крианца|Касилеро дел Диабло Каберне|Кастелани Кианти|Лава Мерло & Каберне|Петит Сара Ред|Сангатеано Примитиво'],
+['Безалкохолни','Кока-кола|Кока-кола зиро|Фанта|Спрайт'],
+['Консумативи','Подложки|Салфетки|Ролки каса големи|Ролки каса малки|Таблетки за миялна|Хапче миялна|Сламки|Захар бяла пакетчета|Кафява захар пакетче|Подсладител|Мед']
+];
+const BX=()=>ld('kasa-bar-x')||[];
+const bk=x=>x[0]+'|'+x[1];
+const bci=c=>{const i=BAR.findIndex(b=>b[0]===c);return i<0?99:i};
+const bItems=()=>{const a=[];BAR.forEach(([c,s])=>s.split('|').forEach(m=>a.push([m,c])));BX().forEach(m=>a.push([m,'Добавени']));return a.sort((x,y)=>bci(x[1])-bci(y[1])||x[0].localeCompare(y[0],'bg'))};
+const barList=()=>bItems().filter(x=>bk(x) in st.bar).sort((x,y)=>x[0].localeCompare(y[0],'bg')).map(x=>x[0]+(st.bar[bk(x)]?' × '+st.bar[bk(x)]:''));
+$('#p-bar').innerHTML=`<div id="bt"></div><section><input id="bq" placeholder="Търси артикул" style="width:100%;text-align:left"><div class="row" style="margin-top:6px"><input id="bn" placeholder="Нов артикул" style="flex:1;width:auto;text-align:left"><button class="bb" id="badd">Добави</button></div></section><section class="hist" id="bl"></section>`;
+function renderBar(){
+ const all=bItems(),b=st.bar||{},q=($('#bq').value||'').trim().toLowerCase();
+ const ch=all.filter(x=>bk(x) in b).sort((x,y)=>x[0].localeCompare(y[0],'bg'));
+ const un=all.filter(x=>!(bk(x) in b)&&(!q||x[0].toLowerCase().includes(q)));
+ $('#bt').innerHTML=`<section><h2>Заявка за бар · ${fd(st.date)}${ch.length?' ('+ch.length+')':''}</h2>`+(ch.length?ch.map(x=>`<div class="bi"><span class="nm">${esc(x[0])}<small class="mute"> · ${esc(x[1])}</small></span><input data-q="${esc(bk(x))}" inputmode="decimal" placeholder="кол." value="${esc(b[bk(x)]||'')}"><button data-bx="${esc(bk(x))}">✕</button></div>`).join(''):'<div class="hint">Отметни артикулите от списъка по-долу.</div>')+`</section>`;
+ let last='',h='';
+ un.forEach(x=>{if(x[1]!==last){last=x[1];h+=`<div class="bh">${esc(last)}</div>`}h+=`<div class="bi" data-bc="${esc(bk(x))}"><span class="nm">${esc(x[0])}</span><span class="bo">☐</span></div>`});
+ $('#bl').innerHTML=h||'<span class="mute">Няма артикули.</span>';
+}
+document.addEventListener('click',e=>{
+ const c=e.target.closest('[data-bc]'),x=e.target.dataset.bx;
+ if(c){st.bar[c.dataset.bc]='1';sv('kasa2-state',st);renderBar()}
+ else if(x!==undefined){delete st.bar[x];sv('kasa2-state',st);renderBar()}
+ else if(e.target.id==='badd'){const v=$('#bn').value.trim();if(v){const l=BX();if(!l.includes(v)){l.push(v);sv('kasa-bar-x',l)}st.bar[v+'|Добавени']='1';sv('kasa2-state',st);$('#bn').value='';renderBar()}}
+});
+document.addEventListener('input',e=>{const q=e.target.dataset.q;if(q!==undefined){st.bar[q]=e.target.value;sv('kasa2-state',st)}else if(e.target.id==='bq')renderBar()});
+
+const T=[['day','Ден'],['sum','Обобщение'],['bar','Заявка'],['week','Седмица'],['hist','История']];
 $('#tabs').innerHTML=T.map(([id,l])=>`<button data-t="${id}">${l}</button>`).join('');
 function show(id){
  T.forEach(([t])=>{$('#p-'+t).hidden=t!==id});
  document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===id));
  $('#bar').style.display=id==='day'?'flex':'none';
- if(id==='sum')renderSum();
+ if(id==='sum')renderSum();if(id==='bar')renderBar();
  if(id==='week'){renderWeek();pull().then(()=>{if(!$('#p-week').hidden)renderWeek()})}
  if(id==='hist'){renderHist();pull().then(()=>{if(!$('#p-hist').hidden&&hv!=='a')renderHist()})}
  window.scrollTo(0,0);
